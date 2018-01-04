@@ -37,7 +37,7 @@ static int hc_sr04_close(struct inode *inode, struct file *filp) {
 }
 
 static ssize_t hc_sr04_read(struct file *filp, char *buf, size_t count, loff_t *f_pos) {
-	int ret, timeout_count;
+	int ret, timeout_count, i;
 	ssize_t bytes, out_buf_size;
 	uint64_t distance = 0;
 	char out_buf[64] = {0};
@@ -54,23 +54,21 @@ static ssize_t hc_sr04_read(struct file *filp, char *buf, size_t count, loff_t *
 	udelay(10);
 	gpio_set_value(HCSR04_TRIGGER, 0);
 
-	/* Wait echo return, timeout if over 40ms */
-	timeout_count = 0;
-	while (gpio_get_value(HCSR04_ECHO) == 0) {
-		if (timeout_count++ > 40000)
-			break;
-		udelay(1);
+	/* Wait echo returns, timeout if over 40ms */
+	for (i = 0; i < 2; i++) {
+		timeout_count = 0;
+		while (gpio_get_value(HCSR04_ECHO) == i) {
+			if (timeout_count++ > 40000)
+				break;
+			udelay(1);
+		}
+		if (i == 0)
+			echo_start = ktime_get();
+		else
+			echo_end = ktime_get();
 	}
-	echo_start = ktime_get();
-	timeout_count = 0;
-	while (gpio_get_value(HCSR04_ECHO) == 1) {
-		if (timeout_count++ > 40000)
-			break;
-		udelay(1);
-	}
-	echo_end = ktime_get();
 
-	/* Calculate distance, it have to divide by 50 to get in cm */
+	/* Calculate distance, it have to divide by 58 to get result in cm */
 	distance = ktime_to_us(ktime_sub(echo_end, echo_start));
 
     printk("HC-SR04: distance = %lld\n", distance);
@@ -79,11 +77,12 @@ static ssize_t hc_sr04_read(struct file *filp, char *buf, size_t count, loff_t *
 	if (ret) {
 		printk("copy_to_user() could not copy %d bytes.\n", ret);
 		return -EFAULT;
-	} else {
-		printk("copy_to_user() succeeded!\n");
-		*f_pos += bytes;
-        return bytes;
 	}
+
+	printk("copy_to_user() succeeded!\n");
+	*f_pos += bytes;
+
+	return bytes;
 }
 
 static ssize_t hc_sr04_write(struct file *filp, const char *buf, size_t size, loff_t *f_pos) {
