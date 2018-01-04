@@ -29,12 +29,12 @@ ktime_t echo_start, echo_end;
 struct class *dev_class;
 
 struct hc_sr04_device {
-    struct device dev;
-    dev_t no;
+	struct device dev;
+	dev_t no;
 };
 
 struct hc_sr04_device hc_sr04_dev = {
-    .no = MKDEV(DEV_MAJOR,0),
+	.no = MKDEV(DEV_MAJOR,0),
 };
 
 struct timer_list hc_sr04_trigger_timer;
@@ -79,12 +79,12 @@ static int hc_sr04_trigger_timer_init(void) {
 
 static int hc_sr04_open(struct inode *inode, struct file *filp) {
 	pr_debug("HC-SR04: %s enter\n", __func__);
-    return 0;
+	return 0;
 }
 
 static int hc_sr04_close(struct inode *inode, struct file *filp) {
 	pr_debug("HC-SR04: %s enter\n", __func__);
-    return 0;
+	return 0;
 }
 
 static ssize_t hc_sr04_read(struct file *filp, char *buf, size_t count, loff_t *f_pos) {
@@ -130,14 +130,14 @@ static ssize_t hc_sr04_write(struct file *filp, const char *buf, size_t size, lo
 }
 
 static struct file_operations hc_sr04_fops = {
-    .open = hc_sr04_open,
-    .release = hc_sr04_close,
-    .read = hc_sr04_read,
-    .write = hc_sr04_write,
+	.open = hc_sr04_open,
+	.release = hc_sr04_close,
+	.read = hc_sr04_read,
+	.write = hc_sr04_write,
 };
 
 static int hc_sr04_init(void) {
-    int ret;
+	int ret;
 	pr_debug("HC-SR04: %s enter\n", __func__);
 
 	/* Initial GPIO */
@@ -174,16 +174,16 @@ static int hc_sr04_init(void) {
 		return -1;
 	}
 
-    /* Register character device */
-    ret = register_chrdev(DEV_MAJOR, DEV_NAME, &hc_sr04_fops);
-    if (ret < 0) {
-        pr_debug("HC-SR04: Failed to register character device\n");
-        return ret;
-    }
+	/* Register character device */
+	ret = register_chrdev(DEV_MAJOR, DEV_NAME, &hc_sr04_fops);
+	if (ret < 0) {
+		pr_debug("HC-SR04: Failed to register character device\n");
+		return ret;
+	}
 	dev_class = class_create(THIS_MODULE, "dev_class");
 	device_create(dev_class, NULL, hc_sr04_dev.no, &(hc_sr04_dev.dev), DEV_NAME);        
     
-    return 0;
+	return 0;
 }
 
 static void hc_sr04_exit(void) {
@@ -197,8 +197,8 @@ static void hc_sr04_exit(void) {
 	device_destroy(dev_class, hc_sr04_dev.no); 
 	class_destroy(dev_class);
 
-    /* Unregister character device */
-    unregister_chrdev(DEV_MAJOR, DEV_NAME);
+	/* Unregister character device */
+	unregister_chrdev(DEV_MAJOR, DEV_NAME);
 }
 
 module_init(hc_sr04_init);
